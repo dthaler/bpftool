@@ -4,29 +4,41 @@
 #define _GNU_SOURCE
 #include <errno.h>
 #include <fcntl.h>
+#ifdef _WIN32
+#include <io.h>
+#endif
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef __linux__
 #include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __linux__
 #include <sys/syscall.h>
 #include <dirent.h>
 
 #include <linux/err.h>
 #include <linux/perf_event.h>
 #include <linux/sizes.h>
+#define HAVE_BTF_SUPPORT
+#endif
 
 #include <bpf/bpf.h>
+#ifdef HAVE_BTF_SUPPORT
 #include <bpf/btf.h>
+#endif
 #include <bpf/libbpf.h>
+#ifdef __linux__
 #include <bpf/bpf_gen_internal.h>
 #include <bpf/skel_internal.h>
+#endif
 
 #include "cfg.h"
 #include "main.h"
@@ -37,36 +49,94 @@
 
 const char * const prog_type_name[] = {
 	[BPF_PROG_TYPE_UNSPEC]			= "unspec",
+#ifdef BPF_PROG_TYPE_SOCKET_FILTER
 	[BPF_PROG_TYPE_SOCKET_FILTER]		= "socket_filter",
+#endif
+#ifdef BPF_PROG_TYPE_KPROBE
 	[BPF_PROG_TYPE_KPROBE]			= "kprobe",
+#endif
+#ifdef BPF_PROG_TYPE_SCHED_CLS
 	[BPF_PROG_TYPE_SCHED_CLS]		= "sched_cls",
+#endif
+#ifdef BPF_PROG_TYPE_SCHED_ACT
 	[BPF_PROG_TYPE_SCHED_ACT]		= "sched_act",
+#endif
+#ifdef BPF_PROG_TYPE_TRACEPOINT
 	[BPF_PROG_TYPE_TRACEPOINT]		= "tracepoint",
+#endif
 	[BPF_PROG_TYPE_XDP]			= "xdp",
+#ifdef BPF_PROG_TYPE_PERF_EVENT
 	[BPF_PROG_TYPE_PERF_EVENT]		= "perf_event",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_SKB
 	[BPF_PROG_TYPE_CGROUP_SKB]		= "cgroup_skb",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_SOCK
 	[BPF_PROG_TYPE_CGROUP_SOCK]		= "cgroup_sock",
+#endif
+#ifdef BPF_PROG_TYPE_LWT_IN
 	[BPF_PROG_TYPE_LWT_IN]			= "lwt_in",
+#endif
+#ifdef BPF_PROG_TYPE_LWT_OUT
 	[BPF_PROG_TYPE_LWT_OUT]			= "lwt_out",
+#endif
+#ifdef BPF_PROG_TYPE_LWT_XMIT
 	[BPF_PROG_TYPE_LWT_XMIT]		= "lwt_xmit",
+#endif
+#ifdef BPF_PROG_TYPE_SOCK_OPS
 	[BPF_PROG_TYPE_SOCK_OPS]		= "sock_ops",
+#endif
+#ifdef BPF_PROG_TYPE_SK_SKB
 	[BPF_PROG_TYPE_SK_SKB]			= "sk_skb",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_DEVICE
 	[BPF_PROG_TYPE_CGROUP_DEVICE]		= "cgroup_device",
+#endif
+#ifdef BPF_PROG_TYPE_SK_MSG
 	[BPF_PROG_TYPE_SK_MSG]			= "sk_msg",
+#endif
+#ifdef BPF_PROG_TYPE_RAW_TRACEPOINT
 	[BPF_PROG_TYPE_RAW_TRACEPOINT]		= "raw_tracepoint",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_SOCK_ADDR
 	[BPF_PROG_TYPE_CGROUP_SOCK_ADDR]	= "cgroup_sock_addr",
+#endif
+#ifdef BPF_PROG_TYPE_LWT_SEG6LOCAL
 	[BPF_PROG_TYPE_LWT_SEG6LOCAL]		= "lwt_seg6local",
+#endif
+#ifdef BPF_PROG_TYPE_LIRC_MODE2
 	[BPF_PROG_TYPE_LIRC_MODE2]		= "lirc_mode2",
+#endif
+#ifdef BPF_PROG_TYPE_SK_REUSEPORT
 	[BPF_PROG_TYPE_SK_REUSEPORT]		= "sk_reuseport",
+#endif
+#ifdef BPF_PROG_TYPE_FLOW_DISSECTOR
 	[BPF_PROG_TYPE_FLOW_DISSECTOR]		= "flow_dissector",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_SYSCTL
 	[BPF_PROG_TYPE_CGROUP_SYSCTL]		= "cgroup_sysctl",
+#endif
+#ifdef BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE
 	[BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE]	= "raw_tracepoint_writable",
+#endif
+#ifdef BPF_PROG_TYPE_CGROUP_SOCKOPT
 	[BPF_PROG_TYPE_CGROUP_SOCKOPT]		= "cgroup_sockopt",
+#endif
+#ifdef BPF_PROG_TYPE_TRACING
 	[BPF_PROG_TYPE_TRACING]			= "tracing",
+#endif
+#ifdef BPF_PROG_TYPE_STRUCT_OPS
 	[BPF_PROG_TYPE_STRUCT_OPS]		= "struct_ops",
+#endif
+#ifdef BPF_PROG_TYPE_EXT
 	[BPF_PROG_TYPE_EXT]			= "ext",
+#endif
+#ifdef BPF_PROG_TYPE_LSM
 	[BPF_PROG_TYPE_LSM]			= "lsm",
+#endif
+#ifdef BPF_PROG_TYPE_SK_LOOKUP
 	[BPF_PROG_TYPE_SK_LOOKUP]		= "sk_lookup",
+#endif
 };
 
 const size_t prog_type_name_size = ARRAY_SIZE(prog_type_name);
@@ -77,11 +147,21 @@ enum dump_mode {
 };
 
 static const char * const attach_type_strings[] = {
+#ifdef BPF_SK_SKB_STREAM_PARSER
 	[BPF_SK_SKB_STREAM_PARSER] = "stream_parser",
+#endif
+#ifdef BPF_SK_SKB_STREAM_VERDICT
 	[BPF_SK_SKB_STREAM_VERDICT] = "stream_verdict",
+#endif
+#ifdef BPF_SK_SKB_VERDICT
 	[BPF_SK_SKB_VERDICT] = "skb_verdict",
+#endif
+#ifdef BPF_SK_MSG_VERDICT
 	[BPF_SK_MSG_VERDICT] = "msg_verdict",
+#endif
+#ifdef BPF_FLOW_DISSECTOR
 	[BPF_FLOW_DISSECTOR] = "flow_dissector",
+#endif
 	[__MAX_BPF_ATTACH_TYPE] = NULL,
 };
 
@@ -131,7 +211,7 @@ static void print_boot_time(__u64 nsecs, char *buf, unsigned int size)
 
 static void show_prog_maps(int fd, __u32 num_maps)
 {
-	struct bpf_prog_info info = {};
+	struct bpf_prog_info info = {0};
 	__u32 len = sizeof(info);
 	__u32 map_ids[num_maps];
 	unsigned int i;
@@ -210,7 +290,9 @@ static void *find_metadata(int prog_fd, struct bpf_map_info *map_info)
 		if (map_info->type != BPF_MAP_TYPE_ARRAY ||
 		    map_info->key_size != sizeof(int) ||
 		    map_info->max_entries != 1 ||
+#ifdef HAVE_BTF_SUPPORT
 		    !map_info->btf_value_type_id ||
+#endif
 		    !strstr(map_info->name, ".rodata")) {
 			close(map_fd);
 			continue;
@@ -263,6 +345,7 @@ static void show_prog_metadata(int fd, __u32 num_maps)
 	if (!value)
 		return;
 
+#ifdef HAVE_BTF_SUPPORT
 	btf = btf__load_from_kernel_by_id(map_info.btf_id);
 	if (libbpf_get_error(btf))
 		goto out_free;
@@ -273,6 +356,7 @@ static void show_prog_metadata(int fd, __u32 num_maps)
 
 	vlen = btf_vlen(t_datasec);
 	vsi = btf_var_secinfos(t_datasec);
+#endif
 
 	/* We don't proceed to check the kinds of the elements of the DATASEC.
 	 * The verifier enforces them to be BTF_KIND_VAR.
@@ -346,7 +430,9 @@ static void show_prog_metadata(int fd, __u32 num_maps)
 	}
 
 out_free:
+#ifdef HAVE_BTF_SUPPORT
 	btf__free(btf);
+#endif
 	free(value);
 }
 
@@ -412,8 +498,10 @@ static void print_prog_json(struct bpf_prog_info *info, int fd)
 	if (info->nr_map_ids)
 		show_prog_maps(fd, info->nr_map_ids);
 
+#ifdef HAVE_BTF_SUPPORT
 	if (info->btf_id)
 		jsonw_int_field(json_wtr, "btf_id", info->btf_id);
+#endif
 
 	if (!hash_empty(prog_table.table)) {
 		struct pinned_obj *obj;
@@ -508,7 +596,7 @@ static void print_prog_plain(struct bpf_prog_info *info, int fd)
 
 static int show_prog(int fd)
 {
-	struct bpf_prog_info info = {};
+	struct bpf_prog_info info = {0};
 	__u32 len = sizeof(info);
 	int err;
 

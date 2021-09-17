@@ -9,9 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __linux__
+#define HAVE_BTF_SUPPORT
+#endif
+
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#ifdef HAVE_BTF_SUPPORT
 #include <bpf/btf.h>
+#endif
 
 #include "main.h"
 
@@ -255,6 +261,7 @@ static int do_batch(int argc, char **argv);
 static const struct cmd cmds[] = {
 	{ "help",	do_help },
 	{ "batch",	do_batch },
+#ifdef __linux__
 	{ "prog",	do_prog },
 	{ "map",	do_map },
 	{ "link",	do_link },
@@ -266,6 +273,7 @@ static const struct cmd cmds[] = {
 	{ "gen",	do_gen },
 	{ "struct_ops",	do_struct_ops },
 	{ "iter",	do_iter },
+#endif
 	{ "version",	do_version },
 	{ 0 }
 };
@@ -395,9 +403,13 @@ int main(int argc, char **argv)
 		{ "bpffs",	no_argument,	NULL,	'f' },
 		{ "mapcompat",	no_argument,	NULL,	'm' },
 		{ "nomount",	no_argument,	NULL,	'n' },
+#ifdef __linux__
 		{ "debug",	no_argument,	NULL,	'd' },
+#endif
 		{ "use-loader",	no_argument,	NULL,	'L' },
+#ifdef HAVE_BTF_SUPPORT
 		{ "base-btf",	required_argument, NULL, 'B' },
+#endif
 		{ 0 }
 	};
 	int opt, ret;
@@ -409,9 +421,11 @@ int main(int argc, char **argv)
 	block_mount = false;
 	bin_name = argv[0];
 
+#ifdef __linux__
 	hash_init(prog_table.table);
 	hash_init(map_table.table);
 	hash_init(link_table.table);
+#endif
 
 	opterr = 0;
 	while ((opt = getopt_long(argc, argv, "VhpjfLmndB:",
@@ -444,10 +458,13 @@ int main(int argc, char **argv)
 		case 'n':
 			block_mount = true;
 			break;
+#ifdef __linux__
 		case 'd':
 			libbpf_set_print(print_all_levels);
 			verifier_logs = true;
 			break;
+#endif
+#ifdef HAVE_BTF_SUPPORT
 		case 'B':
 			base_btf = btf__parse(optarg, NULL);
 			if (libbpf_get_error(base_btf)) {
@@ -457,6 +474,7 @@ int main(int argc, char **argv)
 				return -1;
 			}
 			break;
+#endif
 		case 'L':
 			use_loader = true;
 			break;
@@ -480,11 +498,15 @@ int main(int argc, char **argv)
 		jsonw_destroy(&json_wtr);
 
 	if (show_pinned) {
+#ifdef __linux__
 		delete_pinned_obj_table(&prog_table);
 		delete_pinned_obj_table(&map_table);
 		delete_pinned_obj_table(&link_table);
+#endif
 	}
+#ifdef HAVE_BTF_SUPPORT
 	btf__free(base_btf);
+#endif
 
 	return ret;
 }

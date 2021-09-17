@@ -2,9 +2,13 @@
 /* Copyright (C) 2020 Facebook */
 
 #include <errno.h>
+#ifdef __linux__
 #include <net/if.h>
+#endif
 #include <stdio.h>
+#ifdef __linux__
 #include <unistd.h>
+#endif
 
 #include <bpf/bpf.h>
 

@@ -9,34 +9,78 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <linux/bpf.h>
+#ifdef __linux__
 #include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/hashtable.h>
 #include <tools/libc_compat.h>
+#endif
+#ifdef _MSC_VER
+#define __maybe_unused
+#define __noreturn
+#define __weak
+typedef int64_t ssize_t;
+#define close _close
+
+struct hash_table
+{
+    int count;
+    int data[1];
+};
+
+typedef void* hash_table_value_t;
+typedef hash_table_value_t hash_table_t;
+#define DECLARE_HASHTABLE(name, count) hash_table_value_t name[count]
+struct hlist_node
+{
+    int dummy;
+};
+void hash_init(hash_table_t* table);
+void hash_add(hash_table_t* table, struct hlist_node* hash, uint32_t id);
+inline void
+hash_del(struct hlist_node* hash)
+{
+    (void*)hash;
+}
+
+#define hash_for_each_safe(table, bkt, tmp, obj, hash) \
+	(void*)tmp; \
+	for (bkt = 0, obj = table[bkt]; bkt < ARRAY_SIZE(table); bkt++, obj = table[bkt])
+
+#pragma warning(disable : 4996) /* Use of non _s APIs */
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#endif
 
 #include <bpf/libbpf.h>
 
 #include "json_writer.h"
 
 /* Make sure we do not use kernel-only integer typedefs */
+#ifdef __GNUC__
 #pragma GCC poison u8 u16 u32 u64 s8 s16 s32 s64
+#endif
 
 static inline __u64 ptr_to_u64(const void *ptr)
 {
-	return (__u64)(unsigned long)ptr;
+	return (__u64)(uintptr_t)ptr;
 }
 
 static inline void *u64_to_ptr(__u64 ptr)
 {
-	return (void *)(unsigned long)ptr;
+	return (void *)(uintptr_t)ptr;
 }
 
-#define NEXT_ARG()	({ argc--; argv++; if (argc < 0) usage(); })
-#define NEXT_ARGP()	({ (*argc)--; (*argv)++; if (*argc < 0) usage(); })
-#define BAD_ARG()	({ p_err("what is '%s'?", *argv); -1; })
-#define GET_ARG()	({ argc--; *argv++; })
+#ifdef _MSC_VER
+#define WRAP(x) x
+#else
+#define WRAP(x) (x)
+#endif
+#define NEXT_ARG()	WRAP({ argc--; argv++; if (argc < 0) usage(); })
+#define NEXT_ARGP()	WRAP({ (*argc)--; (*argv)++; if (*argc < 0) usage(); })
+#define BAD_ARG()	WRAP({ p_err("what is '%s'?", *argv); -1; })
+#define GET_ARG()	WRAP({ argc--; *argv++; })
 #define REQ_ARGS(cnt)							\
-	({								\
+	WRAP({								\
 		int _cnt = (cnt);					\
 		bool _res;						\
 									\
@@ -172,6 +216,7 @@ int do_gen(int argc, char **argv);
 int do_btf(int argc, char **argv);
 
 /* non-bootstrap only commands */
+//#pragma comment(linker, "/alternatename:_do_prog=_do_prog")
 int do_prog(int argc, char **arg) __weak;
 int do_map(int argc, char **arg) __weak;
 int do_link(int argc, char **arg) __weak;

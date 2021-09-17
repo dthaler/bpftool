@@ -4,16 +4,20 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#ifdef __linux__
 #include <unistd.h>
 #include <net/if.h>
+#endif
 #ifdef USE_LIBCAP
 #include <sys/capability.h>
 #endif
+#ifdef __linux__
 #include <sys/utsname.h>
 #include <sys/vfs.h>
 
 #include <linux/filter.h>
 #include <linux/limits.h>
+#endif
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
