@@ -12,8 +12,6 @@
 #include <stdio.h>
 #ifdef _WIN32
 #include <stdlib.h>
-#define fprintf _fprintf_p
-#undef HAVE_OBJ_REFS_SUPPORT
 #endif
 #ifdef __linux__
 #include <unistd.h>

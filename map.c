@@ -557,11 +557,13 @@ static void show_map_header_json(struct bpf_map_info *info, json_writer_t *wtr)
 
 static int show_map_close_json(int fd, struct bpf_map_info *info)
 {
+#ifdef HAVE_FREEZE_SUPPORT
 	char *memlock, *frozen_str;
 	int frozen = 0;
 
 	memlock = get_fdinfo(fd, "memlock");
 	frozen_str = get_fdinfo(fd, "frozen");
+#endif
 
 	jsonw_start_object(json_wtr);
 
@@ -575,6 +577,7 @@ static int show_map_close_json(int fd, struct bpf_map_info *info)
 	jsonw_uint_field(json_wtr, "bytes_value", info->value_size);
 	jsonw_uint_field(json_wtr, "max_entries", info->max_entries);
 
+#ifdef __linux__
 	if (memlock)
 		jsonw_int_field(json_wtr, "bytes_memlock", atoi(memlock));
 	free(memlock);
@@ -600,13 +603,16 @@ static int show_map_close_json(int fd, struct bpf_map_info *info)
 		free(owner_prog_type);
 		free(owner_jited);
 	}
+#endif
 	close(fd);
 
+#ifdef HAVE_FREEZE_SUPPORT
 	if (frozen_str) {
 		frozen = atoi(frozen_str);
 		free(frozen_str);
 	}
 	jsonw_int_field(json_wtr, "frozen", frozen);
+#endif
 
 #ifdef HAVE_BTF_SUPPORT
 	if (info->btf_id)
@@ -625,7 +631,9 @@ static int show_map_close_json(int fd, struct bpf_map_info *info)
 		jsonw_end_array(json_wtr);
 	}
 
+#ifdef HAVE_OBJ_REFS_SUPPORT
 	emit_obj_refs_json(&refs_table, info->id, json_wtr);
+#endif
 
 	jsonw_end_object(json_wtr);
 
@@ -652,16 +660,19 @@ static void show_map_header_plain(struct bpf_map_info *info)
 
 static int show_map_close_plain(int fd, struct bpf_map_info *info)
 {
+#ifdef HAVE_FREEZE_SUPPORT
 	char *memlock, *frozen_str;
 	int frozen = 0;
 
 	memlock = get_fdinfo(fd, "memlock");
 	frozen_str = get_fdinfo(fd, "frozen");
+#endif
 
 	show_map_header_plain(info);
 	printf("\tkey %uB  value %uB  max_entries %u",
 	       info->key_size, info->value_size, info->max_entries);
 
+#ifdef __linux__
 	if (memlock)
 		printf("  memlock %sB", memlock);
 	free(memlock);
@@ -688,6 +699,7 @@ static int show_map_close_plain(int fd, struct bpf_map_info *info)
 		free(owner_prog_type);
 		free(owner_jited);
 	}
+#endif
 	close(fd);
 
 	if (!hash_empty(map_table.table)) {
@@ -700,10 +712,12 @@ static int show_map_close_plain(int fd, struct bpf_map_info *info)
 	}
 	printf("\n");
 
+#ifdef HAVE_FREEZE_SUPPORT
 	if (frozen_str) {
 		frozen = atoi(frozen_str);
 		free(frozen_str);
 	}
+#endif
 
 #ifdef HAVE_BTF_SUPPORT
 	if (!info->btf_id && !frozen)
@@ -720,7 +734,9 @@ static int show_map_close_plain(int fd, struct bpf_map_info *info)
 		printf("%sfrozen", info->btf_id ? "  " : "");
 #endif
 
+#ifdef HAVE_OBJ_REFS_SUPPORT
 	emit_obj_refs_plain(&refs_table, info->id, "\n\tpids ");
+#endif
 
 	printf("\n");
 	return 0;
@@ -780,7 +796,9 @@ static int do_show(int argc, char **argv)
 
 	if (show_pinned)
 		build_pinned_obj_table(&map_table, BPF_OBJ_MAP);
+#ifdef HAVE_OBJ_REFS_SUPPORT
 	build_obj_refs_table(&refs_table, BPF_OBJ_MAP);
+#endif
 
 	if (argc == 2)
 		return do_show_subset(argc, argv);
@@ -824,7 +842,9 @@ static int do_show(int argc, char **argv)
 	if (json_output)
 		jsonw_end_array(json_wtr);
 
+#ifdef HAVE_OBJ_REFS_SUPPORT
 	delete_obj_refs_table(&refs_table);
+#endif
 
 	return errno == ENOENT ? 0 : -1;
 }
@@ -1400,7 +1420,9 @@ static int do_create(int argc, char **argv)
 			if (parse_u32_arg(&argc, &argv, &attr.map_flags,
 					  "flags"))
 				goto exit;
-		} else if (is_prefix(*argv, "dev")) {
+		}
+#ifdef IF_NAMESIZE
+		else if (is_prefix(*argv, "dev")) {
 			NEXT_ARG();
 
 			if (attr.map_ifindex) {
@@ -1415,8 +1437,10 @@ static int do_create(int argc, char **argv)
 				goto exit;
 			}
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "inner_map")) {
-			struct bpf_map_info info = {};
+		}
+#endif
+		else if (is_prefix(*argv, "inner_map")) {
+			struct bpf_map_info info = {0};
 			__u32 len = sizeof(info);
 			int inner_map_fd;
 
@@ -1439,7 +1463,9 @@ static int do_create(int argc, char **argv)
 		goto exit;
 	}
 
+#ifdef __linux__
 	set_max_rlimit();
+#endif
 
 	fd = bpf_create_map_xattr(&attr);
 	if (fd < 0) {
@@ -1462,9 +1488,10 @@ exit:
 	return err;
 }
 
+#ifdef HAVE_DEQUEUE_SUPPORT
 static int do_pop_dequeue(int argc, char **argv)
 {
-	struct bpf_map_info info = {};
+	struct bpf_map_info info = {0};
 	__u32 len = sizeof(info);
 	void *key, *value;
 	int err;
@@ -1504,7 +1531,9 @@ exit_free:
 
 	return err;
 }
+#endif
 
+#ifdef HAVE_FREEZE_SUPPORT
 static int do_freeze(int argc, char **argv)
 {
 	int err, fd;
@@ -1533,6 +1562,7 @@ static int do_freeze(int argc, char **argv)
 
 	return 0;
 }
+#endif
 
 static int do_help(int argc, char **argv)
 {
@@ -1591,14 +1621,20 @@ static const struct cmd cmds[] = {
 	{ "getnext",	do_getnext },
 	{ "delete",	do_delete },
 	{ "pin",	do_pin },
+#ifdef __linux__
 	{ "event_pipe",	do_event_pipe },
+#endif
 	{ "create",	do_create },
 	{ "peek",	do_lookup },
 	{ "push",	do_update },
 	{ "enqueue",	do_update },
+#ifdef HAVE_DEQUEUE_SUPPORT
 	{ "pop",	do_pop_dequeue },
 	{ "dequeue",	do_pop_dequeue },
+#endif
+#ifdef HAVE_FREEZE_SUPPORT
 	{ "freeze",	do_freeze },
+#endif
 	{ 0 }
 };
 

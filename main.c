@@ -263,8 +263,8 @@ static const struct cmd cmds[] = {
 	{ "batch",	do_batch },
 #ifdef __linux__
 	{ "prog",	do_prog },
-	{ "map",	do_map },
 #endif
+    { "map",    do_map},
 	{ "link",	do_link },
 #ifdef __linux__
 	{ "cgroup",	do_cgroup },

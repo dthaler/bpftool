@@ -14,6 +14,9 @@
 #include <linux/kernel.h>
 #include <linux/hashtable.h>
 #include <tools/libc_compat.h>
+#define HAVE_DEQUEUE_SUPPORT 1
+#define HAVE_FREEZE_SUPPORT 1
+#define HAVE_OBJ_REFS_SUPPORT 1
 #endif
 #ifdef _MSC_VER
 #define __maybe_unused
@@ -21,6 +24,11 @@
 #define __weak
 typedef int64_t ssize_t;
 #define close _close
+
+#define fprintf _fprintf_p
+#undef HAVE_DEQUEUE_SUPPORT
+#undef HAVE_FREEZE_SUPPORT
+#undef HAVE_OBJ_REFS_SUPPORT
 
 struct hash_table
 {
@@ -78,6 +86,9 @@ static inline void *u64_to_ptr(__u64 ptr)
 	return (void *)(uintptr_t)ptr;
 }
 
+void __printf(1, 2) p_err(const char* fmt, ...);
+void __printf(1, 2) p_info(const char* fmt, ...);
+
 #ifdef _MSC_VER
 #define WRAP(x) x
 #else
@@ -87,24 +98,25 @@ static inline void *u64_to_ptr(__u64 ptr)
 #define NEXT_ARGP()	WRAP({ (*argc)--; (*argv)++; if (*argc < 0) usage(); })
 #ifdef __GNUC__
 #define BAD_ARG()	({ p_err("what is '%s'?", *argv); -1; })
+#define GET_ARG()	({ argc--; *argv++; })
 #else
 #define BAD_ARG()   (p_err("what is '%s'?", *argv), -1)
+#define GET_ARG()	( argc--, *argv++ )
 #endif
-#define GET_ARG()	WRAP({ argc--; *argv++; })
-#define REQ_ARGS(cnt)							\
-	WRAP({								\
-		int _cnt = (cnt);					\
-		bool _res;						\
-									\
-		if (argc < _cnt) {					\
-			p_err("'%s' needs at least %d arguments, %d found", \
-			      argv[-1], _cnt, argc);			\
-			_res = false;					\
-		} else {						\
-			_res = true;					\
-		}							\
-		_res;							\
-	})
+inline bool
+get_req_args(int cnt, int argc, char** argv)
+{
+    bool res;
+
+    if (argc < cnt) {
+        p_err("'%s' needs at least %d arguments, %d found", argv[-1], cnt, argc);
+        res = false;
+    } else {
+        res = true;
+    }
+    return res;
+}
+#define REQ_ARGS(cnt) get_req_args(cnt, argc, argv)
 
 #define ERR_MAX_LEN	1024
 
@@ -151,9 +163,6 @@ extern struct pinned_obj_table prog_table;
 extern struct pinned_obj_table map_table;
 extern struct pinned_obj_table link_table;
 extern struct obj_refs_table refs_table;
-
-void __printf(1, 2) p_err(const char *fmt, ...);
-void __printf(1, 2) p_info(const char *fmt, ...);
 
 bool is_prefix(const char *pfx, const char *str);
 int detect_common_prefix(const char *arg, ...);
