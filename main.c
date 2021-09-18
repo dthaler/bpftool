@@ -261,9 +261,7 @@ static int do_batch(int argc, char **argv);
 static const struct cmd cmds[] = {
 	{ "help",	do_help },
 	{ "batch",	do_batch },
-#ifdef __linux__
 	{ "prog",	do_prog },
-#endif
     { "map",    do_map},
 	{ "link",	do_link },
 #ifdef __linux__
@@ -271,7 +269,11 @@ static const struct cmd cmds[] = {
 	{ "perf",	do_perf },
 	{ "net",	do_net },
 	{ "feature",	do_feature },
+#endif
+#ifdef HAVE_BTF_SUPPORT
 	{ "btf",	do_btf },
+#endif
+#ifdef __linux__
 	{ "gen",	do_gen },
 	{ "struct_ops",	do_struct_ops },
 	{ "iter",	do_iter },

@@ -17,6 +17,8 @@
 #define HAVE_DEQUEUE_SUPPORT 1
 #define HAVE_FREEZE_SUPPORT 1
 #define HAVE_OBJ_REFS_SUPPORT 1
+#define HAVE_PROG_LOAD_TIME 1
+#define HAVE_PROG_MAP_IDS 1
 #endif
 #ifdef _MSC_VER
 #define __maybe_unused
@@ -29,6 +31,9 @@ typedef int64_t ssize_t;
 #undef HAVE_DEQUEUE_SUPPORT
 #undef HAVE_FREEZE_SUPPORT
 #undef HAVE_OBJ_REFS_SUPPORT
+#undef HAVE_PROG_LOAD_TIME
+#undef HAVE_PROG_MAP_IDS
+#define BPFTOOL_WITHOUT_SKELETONS
 
 struct hash_table
 {

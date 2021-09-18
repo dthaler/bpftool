@@ -1155,7 +1155,9 @@ exit_free:
 static void print_key_value(struct bpf_map_info *info, void *key,
 			    void *value)
 {
+#ifdef HAVE_BTF_SUPPORT
 	json_writer_t *btf_wtr;
+#endif
 	struct btf *btf;
 
 #ifdef HAVE_BTF_SUPPORT
