@@ -37,6 +37,10 @@ struct hlist_node
 };
 void hash_init(hash_table_t* table);
 void hash_add(hash_table_t* table, struct hlist_node* hash, uint32_t id);
+inline bool hash_empty(hash_table_t* table)
+{
+    return true;
+}
 inline void
 hash_del(struct hlist_node* hash)
 {
@@ -46,6 +50,10 @@ hash_del(struct hlist_node* hash)
 #define hash_for_each_safe(table, bkt, tmp, obj, hash) \
 	(void*)tmp; \
 	for (bkt = 0, obj = table[bkt]; bkt < ARRAY_SIZE(table); bkt++, obj = table[bkt])
+
+#define hash_for_each_possible(table, obj, hash, id) \
+    int bkt; \
+    for (bkt = 0, obj = table[bkt]; bkt < ARRAY_SIZE(table); bkt++, obj = table[bkt])
 
 #pragma warning(disable : 4996) /* Use of non _s APIs */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -77,7 +85,11 @@ static inline void *u64_to_ptr(__u64 ptr)
 #endif
 #define NEXT_ARG()	WRAP({ argc--; argv++; if (argc < 0) usage(); })
 #define NEXT_ARGP()	WRAP({ (*argc)--; (*argv)++; if (*argc < 0) usage(); })
-#define BAD_ARG()	WRAP({ p_err("what is '%s'?", *argv); -1; })
+#ifdef __GNUC__
+#define BAD_ARG()	({ p_err("what is '%s'?", *argv); -1; })
+#else
+#define BAD_ARG()   (p_err("what is '%s'?", *argv), -1)
+#endif
 #define GET_ARG()	WRAP({ argc--; *argv++; })
 #define REQ_ARGS(cnt)							\
 	WRAP({								\

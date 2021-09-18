@@ -264,7 +264,9 @@ static const struct cmd cmds[] = {
 #ifdef __linux__
 	{ "prog",	do_prog },
 	{ "map",	do_map },
+#endif
 	{ "link",	do_link },
+#ifdef __linux__
 	{ "cgroup",	do_cgroup },
 	{ "perf",	do_perf },
 	{ "net",	do_net },
