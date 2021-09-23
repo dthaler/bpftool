@@ -392,7 +392,7 @@ static int do_show(int argc, char **argv)
 		if (err) {
 			if (errno == ENOENT)
 				break;
-			p_err("can't get next link: %s%s", strerror(errno),
+			p_err("%d can't get next link: %s%s", errno, strerror(errno),
 			      errno == EINVAL ? " -- kernel too old?" : "");
 			break;
 		}
