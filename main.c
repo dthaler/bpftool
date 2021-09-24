@@ -32,7 +32,9 @@ json_writer_t *json_wtr;
 bool pretty_output;
 bool json_output;
 bool show_pinned;
+#ifdef HAVE_BPFFS_SUPPORT
 bool block_mount;
+#endif
 bool verifier_logs;
 bool relaxed_maps;
 bool use_loader;
@@ -404,7 +406,11 @@ int main(int argc, char **argv)
 		{ "help",	no_argument,	NULL,	'h' },
 		{ "pretty",	no_argument,	NULL,	'p' },
 		{ "version",	no_argument,	NULL,	'V' },
+#ifdef HAVE_BPFFS_SUPPORT
 		{ "bpffs",	no_argument,	NULL,	'f' },
+#else
+		{ "pinned",	no_argument,	NULL,	'f' },
+#endif
 		{ "mapcompat",	no_argument,	NULL,	'm' },
 		{ "nomount",	no_argument,	NULL,	'n' },
 #ifdef __linux__
@@ -422,7 +428,9 @@ int main(int argc, char **argv)
 	pretty_output = false;
 	json_output = false;
 	show_pinned = false;
+#ifdef HAVE_BPFFS_SUPPORT
 	block_mount = false;
+#endif
 	bin_name = argv[0];
 
 #ifdef __linux__
@@ -459,9 +467,11 @@ int main(int argc, char **argv)
 		case 'm':
 			relaxed_maps = true;
 			break;
+#ifdef HAVE_BPFFS_SUPPORT
 		case 'n':
 			block_mount = true;
 			break;
+#endif
 #ifdef __linux__
 		case 'd':
 			libbpf_set_print(print_all_levels);
@@ -502,10 +512,12 @@ int main(int argc, char **argv)
 		jsonw_destroy(&json_wtr);
 
 	if (show_pinned) {
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 		delete_pinned_obj_table(&prog_table);
 		delete_pinned_obj_table(&map_table);
 		delete_pinned_obj_table(&link_table);
+#else
+		// TODO: clean up pinning info.
 #endif
 	}
 #ifdef HAVE_BTF_SUPPORT

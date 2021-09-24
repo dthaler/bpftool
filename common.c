@@ -130,7 +130,7 @@ void p_info(const char *fmt, ...)
 	va_end(ap);
 }
 
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 static bool is_bpffs(char *path)
 {
 	struct statfs st_fs;
@@ -140,7 +140,9 @@ static bool is_bpffs(char *path)
 
 	return (unsigned long)st_fs.f_type == BPF_FS_MAGIC;
 }
+#endif
 
+#ifdef __linux__
 void set_max_rlimit(void)
 {
 	struct rlimit rinf = { RLIM_INFINITY, RLIM_INFINITY };
@@ -212,7 +214,7 @@ int open_obj_pinned(const char *path, bool quiet)
 		if (!quiet)
 			p_err("bpf obj get (%s): %s", pname,
 			      errno == EACCES
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 				&& !is_bpffs(dirname(pname))
 #endif
 				?
@@ -250,7 +252,7 @@ int open_obj_pinned_any(const char *path, enum bpf_obj_type exp_type)
 	return fd;
 }
 
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 int mount_bpffs_for_pin(const char *name)
 {
 	char err_str[ERR_MAX_LEN];
@@ -294,7 +296,7 @@ int do_pin_fd(int fd, const char *name)
 {
 	int err;
 
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 	err = mount_bpffs_for_pin(name);
 	if (err)
 		return err;
@@ -484,7 +486,7 @@ out_ret:
 int build_pinned_obj_table(struct pinned_obj_table *tab,
 			   enum bpf_obj_type type)
 {
-#ifdef __linux__
+#ifdef FTW_PHYS
 	struct mntent *mntent = NULL;
 	FILE *mntfile = NULL;
 	int flags = FTW_PHYS;

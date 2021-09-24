@@ -1606,7 +1606,9 @@ static int do_help(int argc, char **argv)
 		"                 queue | stack | sk_storage | struct_ops | ringbuf | inode_storage |\n"
 		"                 task_storage }\n"
 		"       " HELP_SPEC_OPTIONS " |\n"
+#ifdef HAVE_BPFFS_SUPPORT
 		"                    {-f|--bpffs} | {-n|--nomount} }\n"
+#endif
 		"",
 		bin_name, argv[-2]);
 

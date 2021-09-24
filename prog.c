@@ -1765,7 +1765,7 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 		goto err_close_obj;
 	}
 
-#ifdef __linux__
+#ifdef HAVE_BPFFS_SUPPORT
 	err = mount_bpffs_for_pin(pinfile);
 	if (err)
 		goto err_close_obj;
@@ -2439,7 +2439,15 @@ static int do_help(int argc, char **argv)
 		"                        stream_parser | flow_dissector }\n"
 		"       METRIC := { cycles | instructions | l1d_loads | llc_misses | itlb_misses | dtlb_misses }\n"
 		"       " HELP_SPEC_OPTIONS " |\n"
-		"                    {-f|--bpffs} | {-m|--mapcompat} | {-n|--nomount} |\n"
+		"                    "
+#ifdef HAVE_BPFFS_SUPPORT
+		"{-f|--bpffs} | "
+#endif
+		"{-m|--mapcompat} | "
+#ifdef HAVE_BPFFS_SUPPORT
+		"{-n|--nomount} |"
+#endif
+		"\n"
 		"                    {-L|--use-loader} }\n"
 		"",
 		bin_name, argv[-2]);

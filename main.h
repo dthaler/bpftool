@@ -19,6 +19,7 @@
 #define HAVE_OBJ_REFS_SUPPORT 1
 #define HAVE_PROG_LOAD_TIME 1
 #define HAVE_PROG_MAP_IDS 1
+#define HAVE_BPFFS_SUPPORT 1
 #endif
 #ifdef _MSC_VER
 #define __maybe_unused
@@ -33,6 +34,7 @@ typedef int64_t ssize_t;
 #undef HAVE_OBJ_REFS_SUPPORT
 #undef HAVE_PROG_LOAD_TIME
 #undef HAVE_PROG_MAP_IDS
+#undef HAVE_BPFFS_SUPPORT
 #define BPFTOOL_WITHOUT_SKELETONS
 
 struct hash_table
@@ -159,7 +161,9 @@ extern json_writer_t *json_wtr;
 extern bool json_output;
 extern bool show_pinned;
 extern bool show_pids;
+#ifdef HAVE_BPFFS_SUPPORT
 extern bool block_mount;
+#endif
 extern bool verifier_logs;
 extern bool relaxed_maps;
 extern bool use_loader;
@@ -233,7 +237,9 @@ const char *get_fd_type_name(enum bpf_obj_type type);
 char *get_fdinfo(int fd, const char *key);
 int open_obj_pinned(const char *path, bool quiet);
 int open_obj_pinned_any(const char *path, enum bpf_obj_type exp_type);
+#ifdef HAVE_BPFFS_SUPPORT
 int mount_bpffs_for_pin(const char *name);
+#endif
 int do_pin_any(int argc, char **argv, int (*get_fd_by_id)(int *, char ***));
 int do_pin_fd(int fd, const char *name);
 

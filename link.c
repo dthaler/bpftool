@@ -392,7 +392,7 @@ static int do_show(int argc, char **argv)
 		if (err) {
 			if (errno == ENOENT)
 				break;
-			p_err("%d can't get next link: %s%s", errno, strerror(errno),
+			p_err("can't get next link: %s%s", strerror(errno),
 			      errno == EINVAL ? " -- kernel too old?" : "");
 			break;
 		}
@@ -473,7 +473,9 @@ static int do_help(int argc, char **argv)
 		"\n"
 		"       " HELP_SPEC_LINK "\n"
 		"       " HELP_SPEC_OPTIONS " |\n"
+#ifdef HAVE_BPFFS_SUPPORT
 		"                    {-f|--bpffs} | {-n|--nomount} }\n"
+#endif
 		"",
 		bin_name, argv[-2]);
 
