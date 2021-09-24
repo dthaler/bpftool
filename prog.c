@@ -1138,6 +1138,7 @@ static int do_attach(int argc, char **argv)
 	return 0;
 }
 
+#ifdef __linux__
 static int do_detach(int argc, char **argv)
 {
 	enum bpf_attach_type attach_type;
@@ -1159,6 +1160,7 @@ static int do_detach(int argc, char **argv)
 		jsonw_null(json_wtr);
 	return 0;
 }
+#endif
 
 static int check_single_stdin(char *file_data_in, char *file_ctx_in)
 {
@@ -1511,10 +1513,12 @@ get_prog_type_by_name(const char *name, enum bpf_prog_type *prog_type,
 	if (!ret)
 		return ret;
 
+#ifdef __linux__
 	/* libbpf_prog_type_by_name() failed, let's re-run with debug level */
 	print_backup = libbpf_set_print(print_all_levels);
 	ret = libbpf_prog_type_by_name(name, prog_type, expected_attach_type);
 	libbpf_set_print(print_backup);
+#endif
 
 	return ret;
 }
@@ -1575,7 +1579,9 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 				goto err_free_reuse_maps;
 
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "map")) {
+		}
+#ifdef __linux__
+		else if (is_prefix(*argv, "map")) {
 			void *new_map_replace;
 			char *endptr, *name;
 			int fd;
@@ -1624,6 +1630,7 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 			map_replace[old_map_fds].fd = fd;
 			old_map_fds++;
 		}
+#endif // __linux__
 #ifdef IF_NAMESIZE
 		else if (is_prefix(*argv, "dev")) {
 			NEXT_ARG();
@@ -1687,6 +1694,7 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 		bpf_program__set_expected_attach_type(pos, expected_attach_type);
 	}
 
+#ifdef __linux__
 	qsort(map_replace, old_map_fds, sizeof(*map_replace),
 	      map_replace_compar);
 
@@ -1744,6 +1752,7 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 		p_err("map idx '%d' not used", map_replace[j].idx);
 		goto err_close_obj;
 	}
+#endif // __linux__
 
 	load_attr.obj = obj;
 	if (verifier_logs)
@@ -2448,9 +2457,9 @@ static const struct cmd cmds[] = {
 	{ "pin",	do_pin },
 	{ "load",	do_load },
 	{ "loadall",	do_loadall },
+#ifdef __linux__
 	{ "attach",	do_attach },
 	{ "detach",	do_detach },
-#ifdef __linux__
 	{ "tracelog",	do_tracelog },
 	{ "run",	do_run },
 #endif
