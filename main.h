@@ -248,7 +248,6 @@ int do_gen(int argc, char **argv);
 int do_btf(int argc, char **argv);
 
 /* non-bootstrap only commands */
-//#pragma comment(linker, "/alternatename:_do_prog=_do_prog")
 int do_prog(int argc, char **arg) __weak;
 int do_map(int argc, char **arg) __weak;
 int do_link(int argc, char **arg) __weak;

@@ -225,7 +225,7 @@ static void show_link_header_plain(struct bpf_link_info *info)
 	if (info->type < ARRAY_SIZE(link_type_name))
 		printf("%s  ", link_type_name[info->type]);
 	else
-		printf("type %u  ", info->type);
+		printf("type %d  ", info->type);
 
 	printf("prog %u  ", info->prog_id);
 }
