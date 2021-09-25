@@ -20,6 +20,7 @@
 #define HAVE_PROG_LOAD_TIME 1
 #define HAVE_PROG_MAP_IDS 1
 #define HAVE_BPFFS_SUPPORT 1
+#define HAVE_CGROUP_SUPPORT 1
 #endif
 #ifdef _MSC_VER
 #define __maybe_unused
@@ -35,6 +36,7 @@ typedef int64_t ssize_t;
 #undef HAVE_PROG_LOAD_TIME
 #undef HAVE_PROG_MAP_IDS
 #undef HAVE_BPFFS_SUPPORT
+#undef HAVE_CGROUP_SUPPORT
 #define BPFTOOL_WITHOUT_SKELETONS
 
 struct hash_table

@@ -71,7 +71,20 @@ static int do_help(int argc, char **argv)
 		"       %s batch file FILE\n"
 		"       %s version\n"
 		"\n"
-		"       OBJECT := { prog | map | link | cgroup | perf | net | feature | btf | gen | struct_ops | iter }\n"
+		"       OBJECT := { prog | map | link"
+#ifdef HAVE_CGROUP_SUPPORT
+		" | cgroup"
+#endif
+#ifdef __linux__
+        " | perf | net | feature"
+#endif
+#ifdef HAVE_BTF_SUPPORT
+		" | btf"
+#endif
+#ifdef __linux__
+		" | gen | struct_ops | iter"
+#endif
+		" }\n"
 		"       " HELP_SPEC_OPTIONS " |\n"
 		"                    {-V|--version} }\n"
 		"",
@@ -266,8 +279,10 @@ static const struct cmd cmds[] = {
 	{ "prog",	do_prog },
 	{ "map",	do_map },
 	{ "link",	do_link },
-#ifdef __linux__
+#ifdef HAVE_CGROUP_SUPPORT
 	{ "cgroup",	do_cgroup },
+#endif
+#ifdef __linux__
 	{ "perf",	do_perf },
 	{ "net",	do_net },
 	{ "feature",	do_feature },
