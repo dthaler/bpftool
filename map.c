@@ -149,7 +149,7 @@ static int map_type_from_str(const char *type)
 static void *alloc_value(struct bpf_map_info *info)
 {
 	if (map_is_per_cpu(info->type))
-		return malloc(round_up(info->value_size, 8) *
+		return malloc(((size_t)round_up(info->value_size, 8)) *
 			      get_possible_cpus());
 	else
 		return malloc(info->value_size);
