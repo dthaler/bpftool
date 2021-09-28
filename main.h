@@ -168,8 +168,12 @@ extern bool block_mount;
 #endif
 extern bool verifier_logs;
 extern bool relaxed_maps;
+#ifdef __linux__
 extern bool use_loader;
+#endif
+#ifdef HAVE_BTF_SUPPORT
 extern struct btf *base_btf;
+#endif
 extern struct pinned_obj_table prog_table;
 extern struct pinned_obj_table map_table;
 extern struct pinned_obj_table link_table;
@@ -247,7 +251,9 @@ int do_pin_fd(int fd, const char *name);
 
 /* commands available in bootstrap mode */
 int do_gen(int argc, char **argv);
+#ifdef HAVE_BTF_SUPPORT
 int do_btf(int argc, char **argv);
+#endif
 
 /* non-bootstrap only commands */
 int do_prog(int argc, char **arg) __weak;

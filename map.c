@@ -1584,13 +1584,21 @@ static int do_help(int argc, char **argv)
 		"       %1$s %2$s getnext    MAP [key DATA]\n"
 		"       %1$s %2$s delete     MAP  key DATA\n"
 		"       %1$s %2$s pin        MAP  FILE\n"
+#ifdef __linux__
 		"       %1$s %2$s event_pipe MAP [cpu N index M]\n"
+#endif
 		"       %1$s %2$s peek       MAP\n"
 		"       %1$s %2$s push       MAP value VALUE\n"
+#ifdef HAVE_DEQUEUE_SUPPORT
 		"       %1$s %2$s pop        MAP\n"
+#endif
 		"       %1$s %2$s enqueue    MAP value VALUE\n"
+#ifdef HAVE_DEQUEUE_SUPPORT
 		"       %1$s %2$s dequeue    MAP\n"
+#endif
+#ifdef HAVE_FREEZE_SUPPORT
 		"       %1$s %2$s freeze     MAP\n"
+#endif
 		"       %1$s %2$s help\n"
 		"\n"
 		"       " HELP_SPEC_MAP "\n"
@@ -1598,12 +1606,31 @@ static int do_help(int argc, char **argv)
 		"       " HELP_SPEC_PROGRAM "\n"
 		"       VALUE := { DATA | MAP | PROG }\n"
 		"       UPDATE_FLAGS := { any | exist | noexist }\n"
-		"       TYPE := { hash | array | prog_array | perf_event_array | percpu_hash |\n"
-		"                 percpu_array | stack_trace | cgroup_array | lru_hash |\n"
+		"       TYPE := { hash | array | prog_array"
+#ifdef BPF_MAP_TYPE_PERF_EVENT_ARRAY
+		" | perf_event_array"
+#endif
+		" | percpu_hash |\n"
+		"                 percpu_array"
+#ifdef BPF_MAP_TYPE_STACK_TRACE
+		" | stack_trace"
+#endif
+#ifdef BPF_MAP_TYPE_CGROUP_ARRAY
+		" | cgroup_array"
+#endif
+		" | lru_hash |\n"
 		"                 lru_percpu_hash | lpm_trie | array_of_maps | hash_of_maps |\n"
 		"                 devmap | devmap_hash | sockmap | cpumap | xskmap | sockhash |\n"
-		"                 cgroup_storage | reuseport_sockarray | percpu_cgroup_storage |\n"
-		"                 queue | stack | sk_storage | struct_ops | ringbuf | inode_storage |\n"
+		"                 cgroup_storage"
+#ifdef BPF_MAP_TYPE_REUSEPORT_SOCKARRAY
+		" | reuseport_sockarray"
+#endif
+		" | percpu_cgroup_storage |\n"
+		"                 queue | stack"
+#ifdef BPF_MAP_TYPE_SK_STORAGE
+		" | sk_storage"
+#endif
+		" | struct_ops | ringbuf | inode_storage |\n"
 		"                 task_storage }\n"
 		"       " HELP_SPEC_OPTIONS " |\n"
 #ifdef HAVE_BPFFS_SUPPORT

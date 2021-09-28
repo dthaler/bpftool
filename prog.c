@@ -154,6 +154,7 @@ enum dump_mode {
 	DUMP_XLATED,
 };
 
+#ifdef __linux__
 static const char * const attach_type_strings[] = {
 #ifdef BPF_SK_SKB_STREAM_PARSER
 	[BPF_SK_SKB_STREAM_PARSER] = "stream_parser",
@@ -185,6 +186,7 @@ static enum bpf_attach_type parse_attach_type(const char *str)
 
 	return __MAX_BPF_ATTACH_TYPE;
 }
+#endif
 
 #ifdef HAVE_PROG_LOAD_TIME
 static void print_boot_time(__u64 nsecs, char *buf, unsigned int size)
@@ -1081,6 +1083,7 @@ static int map_replace_compar(const void *p1, const void *p2)
 	return a->idx - b->idx;
 }
 
+#ifdef __linux__
 static int parse_attach_detach_args(int argc, char **argv, int *progfd,
 				    enum bpf_attach_type *attach_type,
 				    int *mapfd)
@@ -1138,7 +1141,6 @@ static int do_attach(int argc, char **argv)
 	return 0;
 }
 
-#ifdef __linux__
 static int do_detach(int argc, char **argv)
 {
 	enum bpf_attach_type attach_type;
@@ -2452,9 +2454,9 @@ static int do_help(int argc, char **argv)
 #ifdef _WIN32
         "       TYPE := { bind | xdp }\n"
 #endif
+#ifdef __linux__
 		"       ATTACH_TYPE := { msg_verdict | skb_verdict | stream_verdict |\n"
 		"                        stream_parser | flow_dissector }\n"
-#ifdef __linux__
 		"       METRIC := { cycles | instructions | l1d_loads | llc_misses | itlb_misses | dtlb_misses }\n"
 #endif
 		"       " HELP_SPEC_OPTIONS " |\n"
@@ -2467,7 +2469,9 @@ static int do_help(int argc, char **argv)
 		"{-n|--nomount} |"
 #endif
 		"\n"
+#ifdef __linux__
 		"                    {-L|--use-loader} }\n"
+#endif
 		"",
 		bin_name, argv[-2]);
 

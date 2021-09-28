@@ -427,11 +427,13 @@ int main(int argc, char **argv)
 		{ "pinned",	no_argument,	NULL,	'f' },
 #endif
 		{ "mapcompat",	no_argument,	NULL,	'm' },
+#ifdef HAVE_BPFFS_SUPPORT
 		{ "nomount",	no_argument,	NULL,	'n' },
+#endif
 #ifdef __linux__
 		{ "debug",	no_argument,	NULL,	'd' },
-#endif
 		{ "use-loader",	no_argument,	NULL,	'L' },
+#endif
 #ifdef HAVE_BTF_SUPPORT
 		{ "base-btf",	required_argument, NULL, 'B' },
 #endif
@@ -504,9 +506,11 @@ int main(int argc, char **argv)
 			}
 			break;
 #endif
+#ifdef __linux__
 		case 'L':
 			use_loader = true;
 			break;
+#endif
 		default:
 			p_err("unrecognized option '%s'", argv[optind - 1]);
 			if (json_output)
